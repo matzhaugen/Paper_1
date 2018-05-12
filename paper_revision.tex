@@ -1,0 +1,463 @@
+\documentclass{ametsoc}
+\journal{jcli}
+\bibpunct{(}{)}{;}{a}{}{,}
+% \usepackage{amsmath}
+% \usepackage{float}
+% \usepackage[pdftex]{graphicx}
+% \usepackage{caption}
+% \usepackage{natbib}
+% \usepackage{alltt}
+\usepackage{xr}
+\externaldocument{supplement}
+\newcommand\smallfigwidth{\columnwidth}
+\newcommand\bigfigwidth{\textwidth}
+% \graphicspath{{./figures/}}
+\title{Estimating changes in temperature distributions in a large ensemble of climate simulations using quantile regression}
+\authors{Matz A. Haugen\correspondingauthor{Matz A. Haugen, 
+     5734 S. Ellis Ave, 60637, Chicago, USA.},
+  Michael L. Stein and Elisabeth J. Moyer}
+
+\affiliation{University of Chicago, Chicago, USA} 
+% \affiliation{University of Illinois at Urbana-Champain, Urbana, USA} 
+\email{mahaugen@uchicago.edu}
+\extraauthor{Ryan L. Sriver}
+    \extraaffil{University of Illinois at Urbana-Champain, Urbana, USA}
+% \abstract{
+% Understanding future changes in extreme temperature events in a transient climate is inherently challenging. Because a single model simulation is generally insufficient to empirically characterize the statistical properties of underlying processes, many recent efforts have generated ensembles of repeated simulations (with different initial conditions providing independence) to alleviate that data scarcity. We present here a new method for making use of these ensembles that allows characterizing changes in temperature variability for each given time with high confidence by analyzing all temporal observations simultaneously, assuming that temperature distributions vary smoothly both day to day over an annual cycle and over longer secular trends. To demonstrate our method's utility, we analyze an ensemble of 50 simulations of the Community Earth System Model (CESM) under a scenario of increasing radiative forcing to 2100, focusing on North America in particular. The results both verify aspects of climate system behavior known from previous studies, including that wintertime daily temperature variance generally decreases in the continental mid- and high- latitudes ($> 45^{\circ}$), and also elucidate new features. For example, we find that wintertime continental temperature distributions change in a spatial dipole pattern, becoming more left-skewed in the north ($> 45^{\circ}$) and more symmetric at lower latitudes; while changes in summertime distributions show no clear spatial pattern. That is, winter cold extremes become more variable relative to the overall distributions. Although the examples above concern temperature only, the technique is sufficiently general that it can be used to generate precise estimates of distribution changes in a broad range of climate variables by exploiting the power of ensembles.}
+
+
+\abstract{
+Understanding future changes in extreme temperature events is critically important because of their potential societal cost, but inherently challenging in a transient climate. A single model simulation is generally insufficient to empirically characterize the statistical properties of underlying processes. Ensembles of repeated simulations (with different initial conditions providing independence) not only alleviate this data insufficiency but also allow new approaches for characterizing changes in extremes. We present here a new method of using ensembles that allows characterizing changes in temperature distributions using a continuous representation of seasonality rather than breaking the dataset into seasonal blocks. That is, we assume that temperature distributions evolve smoothly both day-to-day over an annual cycle and year-to-year over longer secular trends. To demonstrate our method's utility, we analyze an ensemble of 50 simulations of the Community Earth System Model (CESM) under a scenario of increasing radiative forcing to 2100, focusing on North America. The results both confirm aspects of climate system behavior known from previous studies and also elucidate new features.Confirming results include that daily temperature bulk variability generally decreases  in wintertime in the continental mid- and high-latitudes ($> 40^{\circ}$). New results include that in these same wintertime distributions, the low tails ``stick'', i.e.\ experience a lesser reduction in variability, producing a more negative skew. Although the examples above concern temperature only, the technique is sufficiently general that it can be used to generate precise estimates of distribution changes in a broad range of climate variables by exploiting the power of ensembles.}
+
+\begin{document}
+	
+\maketitle
+
+\section{Introduction}
+
+Climate timeseries have generally been assumed to be separable into two components: randomness inherent in the underlying physical processes, which we call natural variability, and forced secular trends that follow from increasing concentrations of greenhouse gases.
+Recently, the degree to which that natural variability may itself be changing has received significant scientific interest \citep[e.g.][]{trenberth2011attribution, donat2012shifting,deser2012communication, thompson2015quantifying, kay2015community}. Potential changes in climate extremes, because of their heightened societal impacts, are of special concern \citep[e.g.][]{davison1990models, stott2004human, chavez2005generalized, eastoe2009modelling, otto2012reconciling, swain2014extraordinary, singh2014severe, trenberth2015attribution, diffenbaugh2015anthropogenic, huang2015changes, jalbert2017spatiotemporal}. 
+However, detecting and understanding such changes on timescales relevant to human activities is inherently challenging and generally data-limited.
+%identifying changes in climate variability related to human activities is inherently challenging. 
+%The responses in the climate system are generally assumed to be separable into two components: 
+The long equilibration time of the climate system means that on the timescales of interest to human society, the climate state will be evolving (or `transient'), so that its statistical properties are not stationary. Fully characterizing this evolving natural  variability of rare events is intrinsically challenging due to the limited amount of data in either observations or simulations generally available. Studies of future climate extremes often employ statistical extreme value theory to make inferences about rare events with modest amounts of data.
+% XX some flipping of sentence order here, and made the key word "develop methods" instead of just "study" - EJM.
+
+n this work, we study the entire distribution of temperatures in a transient climate, including rare events, by employing quantile regression on an ensemble of simulations of an identical forcing scenario from a single climate model.
+% Each simulation has a different set of initial conditions to reflect the natural variability of the system. 
+%Given sufficient care with choice of initial conditions, this approach can ensure that each simulation is statistically independent in terms of its natural variability.) 
+Given sufficient care in choosing different initial conditions, such a large ensemble will reflect the natural variability of the system, since each simulation will be be statistically independent in terms of its natural variability. 
+The increased data provided by multiple simulations %XX allows instead of admits?
+then admits more confident statements about changes in the statistical behavior of the system %XX compared to 
+than can be made with a single simulation. While the use of ensembles is a relatively recent development, it is growing rapidly \citep[e.g.][]{deser2012uncertainty, deser2012communication,deser2014projecting,fischer2014detection, kay2015community,sriver2015effects, rodgers2015emergence, hagos2016projection}. \citet{deser2012uncertainty}, \citet{deser2012communication} and \citet{fischer2014detection} in particular discuss how ensembles help in distinguishing internal climate variability from anthropogenic effects and allow more accurate estimates for the forced model response. There remains however considerable room for additional development of statistical methods that exploit the benefits of ensembles. 
+
+% XX "Study" was used in two different ways in first two sentences. I changed to say "we will talk about 3 things" - EJM
+%One under-exploited advantage of ensembles of multiple simulations is that the increased volume of data allows %XX study of examining the entire distribution of a climate variable.
+Ensembles of multiple simulations offer at least three advantages that are currently under-exploited. The most important such advantage is that the increased data volume allows examining the entire distribution of a climate variable.
+ Studies of climate variability to date are generally divided between those that address the center of the distribution 
+\citep[e.g.][]{semenov2002secular,raisanen2002co2, kitoh2009changes, screen2014arctic, schneider2015physics}, and those that address its tails \citep[e.g.][]{katz1992extreme, meehl2009relative, northrop2011threshold, davison2012statistical, huser2014space, trenberth2015attribution, huang2015estimating, jalbert2017spatiotemporal}, generally via extreme value theory. %In part the division has arisen from the data scarcity imposed by particular datasets.  %---- END CC
+%High-resolution dynamically downscaled model studies \citep{XX,XX,XX} could in principle involve multiple runs, but their computational demands generally limit them to at most a few decades of present and future simulations. 
+% XX Those studies 
+A more limited body of studies address overall distributional changes in climate variables, but these generally focus on observations or observation-based data products, which are necessarily limited in terms of data amount and therefore require spatial or temporal aggregation \citep{donat2012shifting, stainforth2013mapping, chapman2013estimating, huybers2014us, mckinnon2016changing, rhines2017seasonally}. 
+When studying model projections using ensembles, the large amount of data at each location allows us to accurately estimate changes in the distribution of climate variables (e.g. temperature) without spatial aggregation.
+
+A second potential advantage provided by data-rich ensembles is that trends in both means and variability need not be modeled as linear in time \citep{franzke2015local,gao2017quantile}. Typically, analyses assume linear trends,  
+but in realistic scenarios, forcings are not linear over centennial timescales, and a linear approximation can be misleading \citep[see for example][]{poppick2017estimating}. The increased data provided by ensembles means that we can consider more flexible statistical models to better represent complex climate responses. %a realistic and often nonlinear scenario. 
+As we will show, distributions of daily temperature evolve nonlinearly, and follow different trajectories even as a function of quantiles (i.e. different parts of the distribution). %We therefore need a sound method that can
+Analysis methods should therefore be able to take into account nonlinearities both in time and across quantiles. 
+
+
+%As opposed to ensemble simulations, observed climate data and reanalysis is often so temporally sparse that one is forced to assume that temperature changes linearly in time. In spite of this linear assumption, observations often corroborate climate model analysis, as seen for example in \citet{rhines2017seasonally}, where winter variability is shown to decrease in a warmer climate due to amplified arctic warming. \citet{mckinnon2016changing} discuss changes in the higher moments of the observed summer temperature distributions and provide a way to cleanly separate shifts in distributions compared to changes in shape. Furthermore, \citet{mckinnon2017observational} compare model and observational variability and find that some models show more variability than observations in some parts of North America. This variability result is corroborated by \citet{loikith2015surface}, who also compare temperature skewness between reanalysis and model data.
+
+Finally, a third advantage of ensembles is that they allow a more natural treatment of seasonal variation in climate variables. In situations of limited data, it is standard practice to treat seasons separately, assuming that each season has a temporally constant average and stationary statistical properties discontinuous from neighboring seasons. With ensembles of simulations, we can allow for a smooth change in the underlying trend from day to day, using a parsimonious set of parameters. By modeling the entire year on a continuum, we can explore how each season transitions to the next and how seasonal patterns change over time, features that may be highly dependent on both geographic location and quantile. 
+
+% XX PARAGRAPH 3
+% But, not yet fully exploited all benefits of ensemble for understanding changes in variability. can overcome other limitations of analyses, that are forced to : 1) study only part of distribution , 2) use simplifying linear assumptions, 3) assume discontinuous changes in behavior from season to season
+
+% XX PARAGRAPH 4 - 1st advantage
+% XX Can let you study entire distribution. People have tended to study either middle (std. deviation) or tail (extremes) - all your citations of tail people. A few people have begun to study entire distribution (cite McKinnon, Rhines). 
+
+% XX PARAGRAPH 5. - 2nd advantage -  
+% Can let you avoid simplifying assumptions.
+% many people make linear approximations in time - approximation that helps you address of lack of data (so can use the whole timeseries), also easy and understandable. (One exception is Andy Poppick  mention & discuss, working in temperature rather than time). We need methods that don't rely on that assumption.
+
+% XX PARAGRAPH 6. - 3rd advantage - temperature variability is highly different by season (cite). standard way of treating seasonal differences is to study seasons separately - implicit assumption of discontinuous change. 
+
+% XX ---- Material up to next line ("We employ") is all part of paras 1-5 if used ------------
+
+%We will consider a model where the forcing is changing according to projected emmissions from the period between 1850-2100.
+
+
+% --------------------- ABOVE IS P 1-6 ----------------------------------
+
+% XX MAYBE IN METHODS Thinking of entire distribution also lets you use different metrics.  IF model across all quantiles can look not only at tail position but at tail shape. We focus here on concept of "tail variability".
+%results on distribution moments of temperature (mean, standard deviation, and skewness) for both winter and summer and show clear differences between the seasons. We then show that winter variability is in general changing more than summer variability, both in magnitude and in a coherent geographic pattern. Skewness change seems to be largely due to the low tail behavior of temperature. We also present a more in-depth look at the temperature model at 3 geographic locations where we see how variability transitions between the seasons. For example, the bulk variability seems to change quite differently from winter to summer depending on latitude. 
+
+We describe here a methodology for exploiting ensembles %addresses all the limitations outlined above t
+ to study changing climate variability 
+% how variability is affected in changing climates, 
+that captures these advantages:  we model the complete distribution of daily temperatures as a continuous function of both seasonality and secular climate change over time. Although the methodology is applied to temperature here, it is general and can be applied to other climate variables of interest. We also show how such an ensemble-based approach is well-positioned for the purposes of uncertainty quantification. Because each simulation is treated as an independent sample drawn from the ensemble of simulations, we circumvent the issue of dependency within each simulation. We can therefore obtain uncertainty quantifications for all estimates by resampling complete simulations from the ensemble.  
+
+ In the sections that follow, we describe estimated changes in both bulk and tail variability as differences in two quantiles; a large quantile difference implies more variability in a given region of the distribution. 
+When those quantiles lie in the high or low tails, the quantile difference is a measure of the spread or thickness of the tail.
+ Figure \ref{schema} gives a pictorial explanation of how quantile differences reflect bulk and tail variability.
+Although the estimated model is seasonally continuous, we also present results assuming seasonally constant conditions, and show that the seasonal effect on temperature can indeed be explained with a reasonably smooth function. When applied to model runs of a realistic future climate scenario, results reproduce some well-understood changes (e.g.\ strong reduction in wintertime variability at continental mid-latitudes) and produce some new insights (e.g.\ strong changes in skewness driven by low tail behavior). 
+
+% XX - Needs a wrap-up sentence? Previously was "With the benefit of multiple simulations, we estimate temperature quantiles to get precise measurements of tail and bulk variability."
+
+\begin{figure} 
+\includegraphics[width=\smallfigwidth]{schema.pdf}
+\caption{\small{An illustration of concepts and values related to distributions used in this paper. The cartoon shows a positively skewed (or ``right-skewed'') probability distribution and the three quantile differences discussed in this paper, in the low tail, high tail, and middle of the distribution. 
+The $p^{th}$ quantile in a distribution is the value such that the probability of being below it has probability $p$. Here $\Delta q_{\text{low}}$ is the difference between the $0.025^{th}$ and $0.05^{th}$ quantiles; the IQR or Interquartile Range that between the $0.25^{th}$ and $0.75^{th}$ quantiles; and $\Delta q_{\text{high}}$ that between the $0.95^{th}$ and $0.975^{th}$ quantiles. The values $\Delta q_{\text{low}}$ and $\Delta q_\text{high}$ quantify variability in extreme values while IQR quantifies variability in the bulk of the distribution.
+}}            %
+\label{schema}          %
+\end{figure}
+
+% Quantile estimates can also provide information about the location, scale and shape of a quantity of interest, and can be used to reduce non-stationarity. For example, the median quantile can be subtracted from the overall distribution to make the location parameter constant over time. A similar procedure can be employed with respect to the scale parameter. \citet{eastoe2009modelling} include a similar estimation procedure as a ``pre-processing'' of the data before modeling non-stationary extremes of ozone data. 
+
+%A detailed description of the data we use is given in Section \ref{sec:data}. The statistical model is introduced in Section \ref{sec:model} with details regarding model complexity and uncertainty quantification deferred to Appendix \ref{app:model}. We present our results in Section \ref{sec:results}, where we first present some 
+
+
+\section{Data}
+\label{sec:data}
+
+We apply our algorithm to an ensemble of 50 historical/future simulations of the Community Earth System Model (CESM) \citep{sriver2015effects}.  The atmospheric component is the low-resolution Community Atmosphere Model version 4, with T31 spectral resolution (${\sim}3.75^\circ \times 3.75^\circ$) and 26 vertical levels. The model ocean component is the low-resolution version of the Parallel Ocean Program version 2 \citep{smith2010parallel} with a nominal horizontal grid resolution of $3^\circ$, augmented to approximately $1^\circ$ at the equator. The ocean model contains 60 vertical levels, down to a maximum depth of 5,500 m. 
+% XX say this only if there is a citation .... "The low-resolution configuration of CESM has been shown to provide key aspects of observed regional climate variability \cite{XX}." 
+
+The ensemble is especially appropriate for the purpose of studying variability because it is based on a ${\sim}10,000$ year pre-industrial control simulation. After a $\sim$4000 year spin-up using constant preindustrial conditions, we initialize 50 historical hindcasts (1850-2005) from snapshots of the coupled model state taken every 100 years, so that  the last hindcast is initialized after approximately 9000 years of the control simulation. We then
+ extend each hindcast to 2100 using the Representative Concentration Pathway (RCP) 8.5 scenario. The 100-year gap between each new initialization ensures nearly independent ensemble members that fully capture internal variability within the coupled system. RCP8.5 corresponds to anthropogenic radiative forcing of roughly 8.5 W m$^{-2}$ by 2100 \citep{moss2010next}. More information about the model and ensemble design can be found in \citet{sriver2015effects}.
+
+% CC --- probably don't need the Moss citation, and J Clim will probably not allow nested parentheses - might be best to delete
+%All ensemble members are identical, except for the initial conditions in year 1850 reflecting the effect of internal variability within the coupled system.
+
+
+% --- this is too defensive and not needed ---
+%This ensemble strategy represents a reliable method for sampling the model’s coupled internal variability, including the effects of the atmosphere, ocean, land surface, and sea-ice. This is in contrast to other initial conditions ensembles that only account for the internal variability of the atmosphere \citep{deser2012uncertainty, kay2015community}. The coupled method captures the internal variability of the ocean, which evolves on much longer time scales than the atmosphere but can still significantly impact global climate variability. In addition, we are sampling initial conditions from unique and instantaneous snapshots on a millennial-scale, providing a self-consistent representation of coupled internal model variability under constant pre-industrial conditions. Because of the integration time and computational cost associated with equilibrating the full ocean, we chose to use the low-resolution configuration of CESM, and it has been shown to provide key aspects of observed regional climate variability. More information about the model and ensemble design can be found in \citet{sriver2015effects}.
+
+CESM does show some known biases that affect primarily temperature means (and possibly trends in means), 
+but also to some extent the higher-order moments of the temperature distribution, e.g. variance and skewness. Known model biases include reduced ocean heat transport, low north Atlantic sea surface temperature, and excessive northern hemisphere sea ice \citep{shields2012low}. %This version of CESM does not include interactive aerosols, which can potentially lead to regional warm biases in historical hindcasts and projections. 
+% CC --- BEGIN   -------
+%In future projections,  (I just deleted the part about anomalies til we understand it.)
+The model generally underestimates both temperature and precipitation extremes compared with observations, i.e.\ the mean of the extreme value distributions is biased, but the scale and shape are consistent with observations for the continental United States \citep{sriver2015effects}. 
+% CC -- we don't need the below, it's too defensive - can leave it out  - the reader knows this. If you do need to make this point, make it at the very end of the section, after you've compared the model to observations yourself - evaluate whether the discreancies you found would impede your analysis
+% --END CC
+%In this work we focus on how distributions change within the climate model considering the effects of both anthropogenic forcing and internal model variability, so biases in the mean compared to the observations are less important. 
+
+% CC -- BEGIN edits below. "Validate" sounds a little more formal than what you're actually doing.
+% CC -- if you say " With results for winter, each quantity shows a decent correspondence .." that implies that summer results DONT show a correspondence. 
+To evaluate whether the CESM simulations provide sufficiently realistic temperature distributions for the purpose of this analysis, we compare CESM temperatures with those from the ERA-Interim (European Reanalysis) data product \citep{dee2011era}. Over the region of analysis, the model adequately reproduces overall geospatial patterns in temperature mean, standard deviation, and skewness, though with some quantitative discrepancies. Figure \ref{model_reanalysis_world} shows the model/reanalysis comparison for winter; for summer see Supplementary Online Material Figure \ref{model_reanalysis_world_JJA}. The model underestimates variability somewhat, and produces excessively cold winter temperatures in the Arctic. The resulting exaggerated temperature gradients contribute to excess variability and excessively negative skew in the northern mid-latitudes.
+(Skewness is proportional to the cube of temperature after subtracting off the average seasonal temperature; see Appendix \ref{app:moments}.) %% ejm changed from cubes to cube.
+ To build intuition around our data, we will show throughout this work results for the three locations \textbf{a}, \textbf{b}, and \textbf{c} shown in Figure \ref{model_reanalysis_world}, which have representative but different temperature distributions. See Supplementary Online Material Figure \ref{rea_temp_locations} for comparison of model and reanalysis temperature distributions in both summer and winter for these locations. 
+% CC could add a sentence saying this is still OK for your purpose if you want, but I think you can skip that
+ 
+\begin{figure}[t]       % it is a macro to save typing later
+% \begin{center}    
+\centerline{\includegraphics[width=\smallfigwidth]{model_reanalysis_world_DJF_agg.pdf}}
+\caption{\small{Comparison of daily temperature distribution properties (mean, standard deviation, and skewness) between the CESM ensemble and ERA-Interim, for winter (DJF; aggregating all daily temperatures without deseasonalizing).
+%XX Matz check this above
+ We compare the years 1979-1994, the first available 15 years of the ERA-Interim dataset, and upscale the reanalysis from $0.75^{\circ}$ to $3.75^{\circ}$ resolution to match CESM. Units on top two rows are degrees Celsius; bottom row showing skewness is dimensionless. Winter skewness over the continental U.S. is negative in both model and reanalysis, implying a thicker lower tail; see Figure 1 and Appendix \ref{app:moments} for example and definitions. Overall, large-scale geospatial patterns are similar in both data sets, though some discrepancies are present (e.g.\ abnormally cold model Arctic winters).  Letters \textbf{a-c} mark locations that will be used in examples throughout the paper; these are ordered from north to south, with latitudes and longitudes \textbf{a} $(50.1, -101)$, \textbf{b} $(42.7, -82)$, \textbf{c} $(35.3, -98)$.}}
+\label{model_reanalysis_world}          %
+\end{figure}
+% CC  Note that these years will be least accurate for the reanalysis - why not use later periods, when satellites make the reansalysis more accurate? You can't cite Figure 4 here - if you did it'd have to become Figure 2. 
+% --  END CC 
+
+\section{Methods}
+\label{sec:model}
+
+% CC BEGIN - can't say "annual change", it's confusing. 
+In the methodology presented here, we 
+model temperature at each location as a function of both seasonality and long-term change of the annual mean climate. %where the latter captures the transient nature of the climate. 
+We use two independent variables, with seasonality represented by a variable $d$, the day of the year (spanning values $1$ to $365$), and change in annual mean temperature represented by a variable $t$, years elapsed since $1850$ (spanning $0$ to $250$ for these scenarios).
+We thus assume that each temperature quantile can be described by two sets of basis functions that represent the two variables' independent relationships with temperature (called here $\{f_i(d)\}$ and $\{g_j(t)\}$), and interaction terms $h_i(d)s_j(t)$, where 
+$f_i, g_j, h_i,$ and $s_j$ are all smooth functions of the appropriate variable. % CC I would say 'assume'; if you say 'create' you have to discuss functional form here. And best to avoid talking about i and j here since you do it below... can you hold off?
+%The span of $i$ and $j$ is determined by how many basis functions are appropriate for the model (discussed below).
+The interaction terms are required to capture effects in which long-term temperature evolution differs between seasons, e.g.\
+%Allowing for interaction between seasonality and long term change allows capturing effects such as 
+the robust projection that winter temperatures warm more than summer temperatures. 
+To impose our smoothness condition, we assume that $f_i, g_j, h_i,$ and $s_j$ are piecewise cubic polynomials with a continuous second derivative, also called splines. \citep[For a review of cubic polynomial basis functions, see][Chapter 5.]{ESL}
+Because the seasonality variable $d$ is periodic, its basis functions are also assumed periodic. 
+For more details, see Appendix \ref{app:model}a.
+
+We choose the number of basis functions by evaluating a metric representing model sufficiency. Our model sufficiency criterion is aimed at capturing the long term underlying signal. We do not require estimated quantile functions to capture transient events during the historical period like volcanic eruptions. Details on how we select the number of basis functions is given in Appendix \ref{app:model}b. In our climate simulation output, the intra-seasonal effect requires more detailed modeling than the inter-seasonal effect. In the results shown here, we fit the model with 15 terms (that is, basis functions) for the main seasonal effect $\{f_i\}$, but the interaction terms require less seasonal complexity, so we use only 3 terms for $\{h_i\}$.  
+We use 4 terms for both the temporal change $\{g_j\}$ and the interaction terms $\{s_j\}$. 
+That is, modeling long-term change generally requires fewer terms than modeling seasonality. In summary, we use 32 basis functions in total including an intercept term. We then fit each $q^{th}$ quantile of temperature % --- END CC
+\begin{equation}
+T_q(d, t) = \alpha + \sum_ia_if_i(d) + \sum_jb_j g_j(t) + \sum_{i,j}c_{i,j} h_i(d)s_j(t),
+\end{equation}
+ where all of the coefficients depend on $q$ but we suppress the dependence for convenience. This fit determines coefficients $a_i$, $b_j$, $c_{i,j}$ for each quantile at each location.
+
+ To simplify notation, we construct a matrix $X$ where each column contains a basis function and each row refers to a unique value of $d$ and $t$. Using this matrix, $X$, we construct our temperature model in vectorized form,
+ \begin{equation}
+ \label{eq:matrix_version}
+ T_q = X\beta_q, 
+ \end{equation}
+ where $\beta_q$ contains the basis coefficients $a_i, b_j, c_{i,j}$. If the total number of basis functions is $p$ and the total number of observations is $n$, then the predictor matrix $X$ will have dimensions $n \times p$ and $\beta_q$ will be a $p$-length vector. To get a confidence interval around $T_q$, we re-estimate the coefficients, $\beta_q$, using a resampled data set. Because we have 50 simulations we resample the data by drawing whole simulations from our ensemble of 50 simulations. Each simulation is treated as a contiguous block of data, and the dependency structure within these blocks is maintained when resampling whole simulations at a time. By repeating this resampling and re-estimation procedure 100 times we obtain pointwise confidence bands around each estimated $T_q$. Appendix \ref{app:model}c provides further details about uncertainty quantification. 
+
+
+% CC BEGIN
+ As an example of a typical model fit, we show in Figure \ref{Estimate} the seasonal cycle in CESM daily temperatures for three locations, along with estimates of low, median and high quantiles. We show here data from 1850 to demonstrate the seasonal fit rather than that of the long-term trend. All locations show strong seasonal differences in variance that are well-represented by our smooth estimates. Relevant features that are captured include an asymmetrical seasonal cycle in all locations; a clear left skewness in wintertime in all three locations (although most pronounced in the higher-latitude \textbf{a} and \textbf{b}); and a distinct springtime shoulder in the higher-latitude locations. %All three sites show that the transition from cold to warm temperatures in spring looks different from the warm to cold transition in fall, suggesting 
+These characteristics show the benefit of explicitly modeling seasonal variations, since analyzing seasonal averages, and perhaps even monthly averages, would throw out meaningful details.
+
+\begin{figure}[t]       % it is a macro to save typing later
+\centerline{\includegraphics[width=\smallfigwidth]{Estimate_3loc.pdf}}
+\caption{\small{Illustration of results of our quantile estimation procedure using the 50-member CESM ensemble. The figure shows ensemble daily mean temperatures for the year 1850 for the three representative locations \textbf{a}, \textbf{b}, and \textbf{c} defined in Figure \ref{model_reanalysis_world}. The ensemble provides 50 points per day but for clarity we show only $10\%$ of the data. Solid lines show the median daily temperature and dashed lines the $2.5^{th}$ and $97.5^{th}$ quantiles estimated by our procedure. %Our procedure captures smoothly-varying seasonal cycles in variability at each location, with 
+(Note the higher variabilities in winter.)  Note that the location of the points exceeding the smooth median estimate are approximately uniform across time (notwithstanding the amplitudes of residuals), suggesting that the quantile estimate is accurate for each day. XX put in Michael's text here
+At all sites, the estimated quantile curves capture the seasonally changing patterns in the distributions reasonably well.
+}} 
+
+\label{Estimate}          %
+\end{figure}
+
+% ----- DONE UP THROUGH HERE ---------------- 
+\section{Results}
+\label{sec:results}
+
+To facilitate comparison to previous studies, we first perform a preliminary analysis where we replicate more standard methods. That is, we examine changes in the aggregate distribution of temperatures over multi-week and multi-month intervals, before we show results from our new approach that calculates responses for individual days. Even the standard analysis readily shows that temperature distributions in the CESM ensemble change markedly over the RCP 8.5 scenario (Figures \ref{location_distributions}, \ref{meanStdSkew_Winter}, and \ref{meanStdSkew_Summer}, which compare the “initial” and “final” time windows 1850-1864 and 2086-2100). Means uniformly shift warmer, but the shapes of the distributions also change in complex ways. Figure \ref{location_distributions} shows initial and final distributions in our example locations for aggregated 15-day periods in winter and summer. In at least two of the three depicted locations, it is clear that the distributions are becoming narrower, although quantifying exactly how the tails are changing requires more sophisticated techniques.
+%difficult to quantify exactly how the tails are changing.
+
+The changes in distributions also exhibit complex spatial patterns. Figures \ref{meanStdSkew_Winter} and \ref{meanStdSkew_Summer} show patterns of change in mean, standard deviation, and skewness using 3-month seasonal blocks (DJF and JJA). We see the expected strong decrease in variance in winter over land, especially in the northern mid-latitudes. By contrast, summer variance changes are much smaller and differ in sign in different locations. Temperature skewness, i.e. the asymmetry of the distribution, shows strong changes in winter over land in a dipole pattern. Winter temperature distributions are in all time periods negatively skewed throughout most of the domain, but in the north (including locations \textbf{a} and \textbf{b}), they become more negatively skewed in the future, while in the south (including location \textbf{c}), they become more symmetric.  Summer skewness changes are again smaller and with less spatial coherence, other than the strong transitions in the Southern Great Plains and in Mexico/Central America, where 
+skewness in temperature distributions actually changes sign. 
+ 
+
+%To gather more information, we first look at the observed temperature patterns from the CESM output across the North American region. Comparing the change between sample moments of average daily temperature distributions for January 1-15  yields a number of observations. First, the average temperature is increasing across the North American region, more uniformly in the summer than in the winter, with amplified winter warming in the North-East as seen in Figure \ref{meanStdSkew_Winter}. Second, temperature variability during winter is decreasing substantially in the northern half of the US and into southern Canada. This temperature variability is measured in units of standard deviation (of temperature), which is a measure of variability of the distribution as a whole. There is a correspondence between standard deviation and interquartile range as measures of variability, where the latter is less sensitive to outliers, or extremes. Thus, we can interpret interquartile range as a measure of variability in the bulk of the temperature distribution. 
+
+
+% save for later ....Each change is associated with a change in the variability of a given temperature. For example, if the low tail is expanding, this is a sign that the low extremes are becoming more variable. 
+
+\begin{figure}[ht]
+\centerline{\includegraphics[width=\smallfigwidth]{temp_locations.pdf}}
+\caption{\small{Evolving distributions of daily mean temperature in the CESM ensemble RCP8.5 model runs at the locations \textbf{a, b, c} defined in Figure \ref{model_reanalysis_world}.  Each distribution includes temperatures from a 15-day period over 15 model years for a total of 11,250 observations (15 days $\times$ 15 years $\times$ 50 ensemble members). Winter distributions %include 
+are taken from Jan 1-15 and summer July 5-19;  ``initial'' distributions include years 1850-1864 and ``final'' years 2096-2100. Changes in distributions are readily apparent, especially in winter at higher latitudes (locations \textbf{a} and \textbf{b}), but detailed quantification, especially of tail changes, requires more sophisticated techniques.}}
+\label{location_distributions}
+\end{figure}
+
+\begin{figure}[ht]
+\centerline{\includegraphics[width=\smallfigwidth]{meanStdSkew_Winter_wcrosses.pdf}}
+\caption{\small{Initial temperature distribution properties (left) and their changes over time (right) in the CESM ensemble RCP8.5 model runs, for aggregate wintertime (DJF) daily temperature. Initial (``pre-industrial'') and final periods are defined as in Figure 4, as 15-year periods 1850--1864 and 2086--2100.  Distributional moments (mean, standard deviation, and skewness) are defined as in Figure 2. Units on the top two rows are degrees Celsius, while the bottom row showing skewness is dimensionless. Gray crosses mark locations where the changes are not significant at the $0.05$ level, obtained by resampling the set of $50$ simulations (with replacement) and recalculating the sample moments. \emph{Top right}: Mean temperature universally increases; note that color scale begins at XX degrees. Extreme warming in the Hudson's Bay region occurs where the model is biased low in present-day simulations. \emph{Middle right}: As expected, standard deviation decreases strongly at higher latitudes. \emph{Bottom right}: Changes in winter skewness show a dipole pattern, which enhances negative skew above $\sim 40 ^\circ$ but reduces it at lower latitudes. }}
+\label{meanStdSkew_Winter}
+\end{figure}
+
+\begin{figure}[ht]
+\centerline{\includegraphics[width=\smallfigwidth]{meanStdSkew_Summer_wcrosses.pdf}}
+\caption{\small{As in Figure \ref{meanStdSkew_Winter} but for aggregate summer (JJA) temperatures, and note that scales differ from those in Figure \ref{meanStdSkew_Winter}. Except in the desert Southwest and Mexico, changes in standard deviation \emph{(middle right)} and skewness \emph{(bottom right)} are generally smaller in summer than in winter and often not significant at the $0.05$ level.}}
+\label{meanStdSkew_Summer}
+\end{figure}
+
+% \EPSFIG[scale=0.45]{mean.pdf}{Initial and final mean temperature and associated change between 1850 and 2100. For winter, we use Jan 1-15, and for summer we use July 5-15. Plots titled 1850 include data from 1850-1865 while plots titles 2100 include data from 2085-2100. The color bar shows units of degrees C, where each color bar applies to both the top and bottom map. Notice how the winter exhibits amplified warming in the North-East. }{mean}
+
+
+% \EPSFIG[scale=0.45]{deviance.pdf}{Temperature standard deviation and associated change between 1850 and 2100. For winter, we use Jan 1-15, and for summer we use July 5-15. Plots titled 1850 include data from 1850-1865 while plots titles 2100 include data from 2085-2100.}{deviance}
+
+% \EPSFIG[scale=0.45]{skewness.pdf}{Change in temperature skewness between the first and last 10 years of the model simulations. For winter, we use the first 10 days of the year and for summer we use July 5-15 to calculate the sample skewness. Gray crosses represent points where the skewness change is not significant at the $\alpha=0.95$ level, obtained by resampling the set of 50 simulations (with replacement) and recalculating the sample skewness. After 100 repetitions of the resampling, we calculate the $95^{th}$-level confidence interval to determine if the skewness change is significantly different from zero. Each color bar represents the maps above and below it.}{skewness}
+
+%To what extent the distributional characteristics are changing, and whether these changes are significant. 
+Our methodology for quantile estimation provides additional information that helps to
+ quantify how temperature distributions are changing and to estimate the uncertainty associated with each change. 
+%The goal is to understand how the temperature distribution is changing, both in the middle and in the extremes (or tails) of the distribution. 
+We can evaluate not only bulk variability  -- the interquartile range (IQR), the difference between the 0.25th and 0.75th quantiles -- but differences between any two quantiles. 
+We therefore evaluate the difference between two low or high quantiles, denoted $\Delta q_{low}$ and $\Delta q_{high}$, which measure tail variability in the same way that interquartile range measures the variability of the bulk distribution.
+If the skewness of a distribution changes over time, then future distributions are not simply scaled versions of present distributions. That is, their tail variabilities must change differently than does the IQR.
+  In the case of the northern mid-latitudes winter temperatures shown in Figure \ref{meanStdSkew_Winter}, where distributions become more negatively skewed as bulk variability decreases in the future, the effect could result from either/both a low tail contracting less than the bulk (or actually increasing), or a high tail contracting more than the bulk. Our methodoogy allows readily differentiating these cases.
+
+To assess whether the high tail and/or the low tail is driving changes in skewness, we consider the fractional changes in low, high, and bulk variability.
+%Bulk variability, e.g. the interquartile range (IQR), is commonly linked to the tail variability. For example, a decrease in the bulk variability as a result of an overall scale change will produce a corresponding decrease in the tail variability. However, if for example the tail contracts less the bulk, there will be a skewness change. To show how variability at the different quantiles change with respect to the initial value, 
+If we denote the initial and final quantile difference as $\Delta q_{p, i}$ and $\Delta q_{p, f}$ at the $p^{th}$ percentile, the temporal change in quantile differences relative to the initial year is then
+\begin{equation}
+	\rho = \frac{\Delta q_{p, f} - \Delta q_{p, i}}{\Delta q_{p, i}}.
+\label{eq:relnorm}
+\end{equation}
+ Because our method reveals the complete temperature distribution for each day of the year for all years, we choose a representative day to understand winter and summer changes (Jan 1 and July 5, respectively), and consider the difference between the beginning and end of the scenarios, the years 1850 and 2000. For these representative days, we show in Figure \ref{winter_summer_var_avg} the fractional variability changes of $\rho$ for low and high tails as well as the IQR. 
+
+Results  show that tail changes can indeed differ strongly from changes in the bulk of the distribution.  In wintertime (Figure \ref{winter_summer_var_avg}, top row), in much of the northrn mid-latitudes (including locations \textbf{a} and \textbf{b}), low tails change in a way that contributes to more a more negative skew. Low tail variability contracts less than does the IQR, while high tail variability contracts more strongly. (High tails would contribute to more negative winter skew predomimantly in the Hudson's Bay region, where the model shows distinct bias.) In summertime (Figure \ref{winter_summer_var_avg}, bottom row), the high tail dominates the transition to positive skew in the Southern Great Plains region (including location \textbf{c}).
+%to the production of negative skew in southern Mexico/Central America. Bulk variability increases, but variability increases more in the low tail and less in the high tail than in the IQR.   
+See Supplementary Online Material for additional related figures that provide context.  Figure \ref{winter_summer_var_avg_big} shows the same analysis over a larger region, and Figures \ref{winter_summer_var_mn} and \ref{winter_summer_var_mx} repeat Figure \ref{winter_summer_var_avg} but for daily maximum and minimum temperatures, respectively, rather than for daily means. 
+%Summer variability changes more in the low tail and the IQR than in the high tail. Substantial widening of the temperature distribution's IQR and low tail is seen in Central America, in turn causing a more negative skew as seen in Figure \ref{meanStdSkew_Summer}. Information about which tail change causes change in skewness is a detail made possible through our proposed method. 
+
+%Additional figures in the Supplementary Online Material provide further context. The analyses above are 
+% performed on daily average temperature; similar analyses on daily maximum and minimum temperature are shown in Figures \ref{winter_summer_var_mn} and \ref{winter_summer_var_mx}. %As expected, there are similarities between the daily average and daily maxima/minima, and maybe the most interesting difference is the large increase in summer low-tail variability of the minima in the north (bottom left panel in Fig \ref{winter_summer_var_mn}). 
+%Figure \ref{winter_summer_var_avg_big} shows the same analysis on a larger region to convey the broader meteorological context.
+
+
+\begin{figure*}[ht]
+\centerline{\includegraphics[width=\bigfigwidth]{winter_summer_var_avg_relnorm.pdf}}
+\caption{\small{Changes in daily temperature variability (quantile differences) over time in CESM ensemble RCP8.5 runs estimated using our statistical approach. Because our approach removes the need to aggregate over time when presenting changes, we show here differences in distributions for a single day and year: Jan 1 for winter (\emph{top}) and  July 5 for summer (\emph{bottom}), with differences evaluated between the years 1850 and 2100.  Changes are expressed as fractions of initial variability, so that the value 0 indicates no change with respect to the initial year.   \emph{Left}, \emph{middle}, and \emph{right} columns show, respectively, changes in low tail variability, IQR, and high tail variability, as previously defined.  Gray crosses mark grid points where the change is less than 3 standard deviations from the original estimate. As expected, estimated changes in IQR (\emph{middle}) are similar to changes in standard deviation seen in Figures \ref{meanStdSkew_Winter} and \ref{meanStdSkew_Summer}. Changes in tail variability are clearly different from those in IQR, meaning that future distributions are not simply a rescaling of the present-day distributions. 
+%Wintertime low tail variability 
+ }}
+\label{winter_summer_var_avg}
+\end{figure*}
+
+To clarify the relative contributions of high and low tails to skewness changes, we 
+also examine evolving temperature variability in the bulk and tails as a function of seasonality as well as long term change. 
+Figure \ref{dq_vs_day} shows absolute variability changes 
+for the three example locations \textbf{a}, \textbf{b}, and \textbf{c}
+estimated using our quantile model, and for fractional changes see Supplementary Online Material Figure \ref{dq_vs_day_norm}.  %Again, each locations' temperature distributions are shown in Figure \ref{location_distributions} for summer and winter. 
+  %  shows variability both in the bulk and in the tails for each day of the year 
+Colored lines show different years in the 1850-2100 simulations, and enveloping dashed lines represent $90\%$ confidence intervals. See Appendix \ref{app:model}\ref{app:uq} for details about uncertainty quantification.
+Horizontal variations are the seasonal evolution of variability; vertical offsets between lines are long-term changes.
+In all locations, wintertime skewness changes are driven by the relative changes in IQR and low tails. In the higher-latitude locations \textbf{a} and \textbf{b}, more negative winter skew results because the IQR contracts even more strongly than does the low tail variability. In other words, the low tails ``stick''.  In the lower-latitude location \textbf{c}, more positive winter skew results because the IQR barely changes while the low tail variability contracts strongly. 
+
+
+%KEY THINGS TO LOOK AT IN THIS FIGURE
+%
+%* IQR: present-day IQR itself has different structure of seasonal change in different locations.
+%* In northernmost two locations, decreease in winter variabiity strongest where variability is currently high ; southernmost location shows 
+%* Low tail variabiilty is different in all locations but high tail is roughly comparable 
+
+%It is clear that the low tail variability change we see during winter between years 1850-2100 from Figure \ref{dq_vs_day_norm} disappears as one moves into the spring months. 
+%Not only does this suggest which tail is responsible for skewness changing, but we also see how seasonality affects this change, which is difficult to see when just looking at the raw distributions. 
+
+
+The complexity of the relationships in Figure \ref{dq_vs_day} also shows how misleading it may be to use a three-month block to represent a season. 
+ With the detailed information that results from our approach, we can see just how complex even the present day variability profiles are. While all three locations show higher bulk variability (IQR) in winter than summer, the transition from winter to summer happens more quickly in some locations than at others, more abruptly in the northernmost location \textbf{a} and more gradually in \textbf{c}. Low-tail variability seasonal transitions are even sharper than those of IQR in \textbf{a} and \textbf{b}, but more gradual in \textbf{c}.
+%also has very different profiles between each location. Location \textbf{a} hits peak low-tail variability during the shoulder seasons (spring and fall), while location \textbf{b} shows a more gradual low tail variability rise toward winter. Location \textbf{c} shows less temporal change in the IQR compared with the other locations. Overall, 
+In contrast, high-tail variability is more seasonally constant overall than low-tail variability. 
+Through these examples, we see how our method offers detailed information about changes in variability across seasons and annual change, usually unavailable when analyzing each season separately. 
+
+While we show only three locations in the text here, an online interactive application allows similar in-depth examination of changes in model temperature distributions at all locations within North America, available at {\small\texttt{https://matzhaugen.com/links.html}}. The application allows the user to browse through any desired location to see how the variability changes as a function of season, year and quantile difference. We include temperature histograms of the first and last simulation year for the designated location, as well as maps that show the variability change spatially. 
+
+\begin{figure*}[ht]
+\centerline{\includegraphics[width=\bigfigwidth]{dq_vs_day.pdf}}
+\caption{\small{Evolving daily temperature variability (quantile differences) over time in CESM ensemble RCP8.5 runs estimated using our statistical approach, for locations \textbf{a}, \textbf{b}, and \textbf{c}. Using the analysis described in Figure \ref{winter_summer_var_avg},
+ we show absolute IQR and tail variability as a function of seasonality, with different years (at 40 year intervals) shown as different colored lines, %Tail variability is quantified by quantile differences $0.05 - 0.025$ (low),  $0.975 - 0.95$ (high). 
+from 1850 (dark blue) to 2090 (dark red).
+ %Each line represents a particular timeslice, with a 40 year interval, starting at 1850 in blue. Each shade closer to red represents a 40 year shift in the model estimate, so light blue is 1890. 
+Dashed lines represent pointwise $90\%$ confidence intervals. Note the complexity of seasonal cycles in variability at different locations. These results show that the dipole pattern of changes in wintertime skewness changes seen in Figure \ref{meanStdSkew_Winter} %and \ref{meanStdSkew_Summer} 
+is driven by low rather than high tail behavior. In wintertime, in the more northern locations \textbf{a} and \textbf{b}, IQR reduces more strongly than does low tail variability, making skew more negative. In the more southern location \textbf{c}, IQR change is negligible while low tail variability reduces strongly, making skew more positive. In all locations, absolute changes in wintertime low tail variability are larger than changes in high tails. For fractional changes, see Supplementary Online Material Figure \ref{dq_vs_day_norm}. }}
+\label{dq_vs_day}
+\end{figure*}
+
+
+\section{Conclusions}
+\label{sec:conclusions}
+
+We present a method to quantify changes in tail variability of temperature with high precision in a transient climate model. Using data from the whole year and the whole span from 1850-2100 we estimate temperature as a function of seasonality and long term change. Analyzing the whole year simultaneously as opposed to analyzing each season separately allows for more flexible modeling of seasonality. The large ensemble makes it possible to fit such models stably.
+
+By resampling entire simulations from the ensemble of climate simulations and recalculating the quantiles, we obtain confidence bands that do not require any assumptions of independence within any one simulation. We show that the smooth quantile estimates are accurate even across small intervals of the domain of the predictors. The fidelity of these intervals serves as a criterion to determine the required complexity in the statistical model.
+
+The techniques presented in this study are validated in part by the fact that they replicate several prior conclusions made in the literature, e.g. the well-known projected decrease in winter variability in the northern mid-latitudes \citep[e.g.][]{schneider2015physics} most likely due to amplified warming in the arctic \citep{screen2014arctic}. Our approach furthermore allows us to quantify tail variability and give corresponding confidence intervals around our estimates. In the case study of CESM runs analyzed here, we relate the changes in tail variability to changes in skewness of the temperature distributions, and find that in most of the domain analyzed, wintertime skewness changes are driven largely by the relative behavior of IQR and low tails. For example, in much of the continental northern U.S.\ and Canada, the low tail of temperature contracts substantially less than does the overall temperature variability. 
+
+These results may inform physical explanations for 
+%The CESM study also usefully highlights other interesting changes, including 
+the projection that skewness in winter temperature changes in a dipole pattern across North America. It is possible that the skewness change is a result of a change in the mean location and variability of the mid-latitude jet stream \citep[e.g.][]{barnes2013response}; this possibility may warrant further study.
+
+The abundance of data available in ensemble simulations relative to single simulations allows using quantile regression to accurately estimate high quantiles, avoiding some of the limitations of extreme value theory. Unlike quantile regression, methods using extreme value theory require making assumptions about the shape of the tail of the distribution. By parameterizing the seasonally time-varying distribution of temperature through smooth functions using the whole year as our domain, we also reveal previously unavailable details  about seasonal transitions. For example, we show here that springtime variability decreases occur later in the year at lower latitudes, and that seasonal transitions in tail variability differ from those in IQR.  While we analyze only temperature here, our method is intended to be general enough to be applied to other climate variables such as precipitation or humidity.
+These detailed insights into climate variable distributions may be valuable for risk assessment studies that emphasize extreme events.
+
+\section*{Acknowledgments}
+This work was supported in part by STATMOS, the Research Network for Statistical Methods for
+Atmospheric and Oceanic Sciences (NSF-DMS awards 1106862,
+1106974 and 1107046), and RDCEP, the University of Chicago
+Center for Robust Decision-making in Climate and Energy Policy
+(NSF grant SES-0951576). We acknowledge the University of Chicago
+Research  Computing  Center,  whose  resources  were  used  in  the
+completion of this work. Ryan L. Sriver acknowledges support from the Department of Energy sponsored Program on Integrated Assessment Model Development, Diagnostics and Inter-Model Comparisons (PIAMDDI), and the Program on Coupled Human Earth Systems (PCHES).
+
+\newpage
+\appendix
+
+\section{Model and reanalysis comparisons}
+\label{app:moments}
+
+Following the discussion on the paper, we define sample mean, variance and skewness as
+\begin{align}
+\bar{x} &= \frac{1}{n}\sum_{i=1}^n x_i \nonumber\\ 
+s^2 &= \frac{1}{n}\sum_{i=1}^n \left(x_i - \bar{x}\right)^2 \nonumber\\ 
+\gamma &= \frac{1}{n}\sum \left(\frac{x_i - \bar{x}}{s}\right)^3.
+\end{align}
+These definitions are used in Figures \ref{model_reanalysis_world}, \ref{meanStdSkew_Winter}, and \ref{meanStdSkew_Summer} in the main text  
+and in Supplementary Online Material Figures \ref{model_reanalysis_world_JJA} and \ref{rea_temp_locations}. We plot the standard deviation ${s}$ rather than the variance $s^2$. % The comparison between reanalysis and CESM data during summer is shown in Figure \ref{model_reanalysis_world_JJA} for completeness. The same three locations from the main text are picked out to show the comparisons between the complete distributions for both summer and winter in Figure \ref{rea_temp_locations} in the supplement.
+
+
+
+     %
+\section{Model Details}
+\label{app:model}
+
+In the following, we first give details regarding the regression of temperature quantiles on a fixed set of basis functions. We then discuss how to select the number of basis functions, through a ``sufficiency criterion''. Lastly, we describe how we quantify uncertainty in the quantile estimates.
+
+ \subsection{Model estimation}
+ Given the number of basis functions in our model, represented by the columns in a matrix $X$ with number of rows equal to the number of observations in the data set,  we construct our temperature quantile estimate, $\hat{T}_q$, and corresponding coefficients, $\hat{\beta}_q$, viz.
+ \begin{equation}
+ \hat{T}_q = X\hat{\beta}_q
+ \end{equation}
+such that the $q^{th}$ fraction of residuals between the observations $T$ at a particular location and their estimates, $T - \hat{T}_q$, are greater than zero and a fraction $1-q$ are less than zero. With the temperature model in Equation \ref{eq:matrix_version}, our coefficient vector estimate, $\hat{\beta}$, contains the estimates of $a_i, b_j, c_{i,j}$. Note that the seasonal interaction terms corresponding to the coefficients $c_{i,j}$ are not necessarily the same as the main seasonal terms corresponding to $a_i$. In fact, we find that fewer seasonal interaction terms are needed to describe the interaction behavior. 
+
+Computationally, obtaining the above quantile is equivalent to solving the following optimization problem \citep{koenker1978regression},
+\begin{multline}
+\underset{\beta}{\text{min}}\left\{ \sum_{d,t: T(d, t) \geq X(d, t)\beta} q|T(d,t) - X^T(d,t)\beta| \right. \quad+  \\
+ \left. \sum_{d,t: T(d, t) < X(d, t)\beta} (1 - q)|T(d,t) - X^T(d,t)\beta| \right\},
+\end{multline}
+and can be implemented in either R or MATLAB using existing libraries\footnote{We use the R library rq and the function \texttt{rq.fit.pfn}, developed by \citet{portnoy1997gaussian}. Basis functions are created using \texttt{pbs} for periodic spline basis functions and \texttt{ns} for non-periodic splines. The non-periodic splines are constrained to be linear beyond the domain, 1850-2100, and are called \emph{natural splines}.}. Because we have access to 50 simulations, each location provides us with $365 \times 250 \times 50$ or approximately $4.5$ million observations. Consequently, even fairly high quantiles can be accurately estimated without borrowing data from neighboring locations through a spatial model as done by e.g. \citet{reich2011bayesian}. However, making inferences about more extreme quantiles, such as the quantiles $.001$ or $.999$, cannot be guaranteed to work as well with our methods.
+
+We do not experience issues with quantile estimates crossing in our study area even though the optimization framework above does not explicitly enforce monotonicity with increasing percentile estimates. The absence of crossing quantiles is likely also due to the large sample size. For strict enforcement of monotonicity in the quantile curves see e.g. \citet{bondell2010noncrossing}.
+
+\subsection{Model selection}
+ We describe our approach to selecting a modest set of basis functions that can accurately represent the temperature data. If the model chosen has too many basis functions we run the risk of overfitting out-of-sample observations. To make sure this does not happen we need a metric to quantify the goodness-of-fit of the model. 
+
+ Any reasonable temperature model we fit to the data will by definition contain the desired amount of positive and negative residuals \emph{globally} according to the desired quantile $q$. A more stringent requirement would be that the smooth temperature estimate contains approximately an appropriate fraction of positive and negative residuals on a \emph{daily} basis: for each $d$ and $t$, 
+\begin{equation}
+S(d,t) = \frac{1}{n}\sum_{i=1}^n I\left[\hat{T_i}(d,t) - T_i(d,t) > 0\right] \approx q, 
+\label{eq:Sdt}	
+\end{equation}
+ where $I$ is the indicator function and $n$ is the total number of samples (i.e. 50 for our CESM ensemble data set). If $S(d,t)$ is close to the value $q$ for each $d$ and $t$, the model would accurately describe the data and the number of basis functions is sufficient. In reality, we are looking basis functions that obey \ref{eq:Sdt} with $d$ averaged over blocks of days to increase the sample size, e.g. 10 days blocks. It is also not the goal to capture the quantile at too short a timescale as events like volcanic eruptions would interfere with the estimate.
+
+ In order to estimate the appropriate number of basis functions, we hold out 5 simulations from the fitting process and use these to calculate our exceedences, which we call $S_{test}(d,t)$. We repeat this 10 times so that all the simulations are eventually held out, giving 10 samples of $S_{test}(d,t)$. As we increase model complexity through degrees of freedom in the basis functions, the variability of $S_{test}$ should reach a minimum when the necessary number of basis functions is reached and the quantile estimate is the same for each time point. If the number of basis functions is increased beyond this point, we start to overfit the data and the out-of-sample variability of $S_{test}$ will increase. 
+
+To estimate $S_{test}$, we block the variables in two ways, one for each variable. First, we divide each year in 10-day bins and calculate the average exceedence estimate, $\hat{S}_{test}$, in each bin. We sum over the whole domain of long term change, $t$, and a subset of the seasonality variable, $d$. Specifically, let $A$ be a set of non-overlapping contiguous blocks of days that together cover the whole year, where $a_j, \quad j = 1, ..., m$ are the elements of the set. Also let $T$ be the index set for long term change, $T = [1850,2100]$, measured in years. Then, for all  $a_j \in A$,
+\begin{equation}
+\label{eq:stest}
+\hat{S}_{test}(a_j) = \frac{1}{n}\sum_{i=[1,n], d\in a_j, t \in T} I\left[\hat{T_i}(d,t) - T_i(d,t) > 0\right].
+\end{equation}
+To get an equal number of days in each bin we use the first 360 days of the year only.
+
+ Second, we divide the long term change variable, $t$, in bins and repeat the process by flipping the role of the variables in Equation \ref{eq:stest} to get a set of $\hat{S}_{test}(b_j)$ with $b_j \in B$, a set of non-overlapping contiguous blocks of long-term change indices in $T$. An example of the blocked exceedence estimate is shown in Figure \ref{Exeedence}. Note that the pointwise quantile estimate is contained between the error bars, suggesting that the model is sufficiently complex. The standard deviation of these estimates of $\hat{S}_{test}$ is our measure of exceedence variability. 
+
+
+\begin{figure}[ht]
+\centerline{\includegraphics[width=\smallfigwidth]{Exeedence.pdf}}
+\caption{\small{Exceedence probability of temperature events above the $95^{th}$ quantile estimate. The density is obtained by making 10-day bins and counting the number of observations that are above the quantile estimate and normalizing by the total number of exceedences aggregated across all model runs. Each bin is represented by the bin start day, i.e. an x-axis value of 0 includes the interval $(0,10]$. We hold out 10 different sets of simulations to obtain 10 different estimates for each block of time, from which we calculate their mean shown as points and standard deviation shown as error bars around $\hat{S}_{test}$.}}
+\label{Exeedence}
+\end{figure}
+
+We seek the simplest model that gives good calibration of the quantile estimates (so close to 0.05 in Figure \ref{Exeedence}). At the same time we have to watch out to not overfit the data so we also want to minimize out-of-sample variability. We find that a model with $15$ seasonal, $3$ seasonal-interaction and $4$ temporal degrees of freedom minimizes the variability of exceedences $\hat{S}_{test}$, shown in Figure \ref{CV}, where seasonality has been binned. The out-of-sample fit when binning long-term change is shown in Figure \ref{CV_t} in the supplement. Here, models 4-6 have approximately equal test error, so since binning seasonality suggests the complexity of model 6, we chose model 6 as the overall model. Including the possible interaction terms, the full model has 32 free parameters to be fitted, or $\hat{\beta} \in \mathbb{R}^{32}$. All model candidates are shown in Table \ref{tab:models}. We reach the same conclusion when blocking the long term change, $t$, and when analyzing different spatial locations (see Figure \ref{CV_t}).
+
+% latex table generated in R 3.2.4 by xtable 1.8-2 package
+% Tue Jun  6 16:25:43 2017
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrr}
+  \hline
+ & Seasonal & Seasonal-Int. & Temporal \\ 
+  \hline
+1 & 5 & 3 & 3 \\ 
+  2 & 7 & 3 & 3 \\ 
+  3 & 10 & 3 & 3 \\ 
+  4 & 10 & 3 & 4 \\ 
+  5 & 12 & 3 & 4 \\ 
+  6 & 15 & 3 & 4 \\ 
+  7 & 15 & 3 & 5 \\ 
+  8 & 15 & 5 & 5 \\ 
+  9 & 18 & 5 & 5 \\ 
+   \hline
+\end{tabular}
+\caption{Degrees of freedom in the spline basis for each 
+    independent variable, with the interaction terms including the reduced set of seasonal polynomials with degrees of freedom listed in the middle column. The temporal polynomials are the same in both the main and interaction terms.} 
+\label{tab:models}
+\end{table}
+
+\begin{figure}[ht]
+\centerline{\includegraphics[width=\smallfigwidth]{CV.pdf}}
+\caption{\small{Training and test exceedence standard deviation as a function of model number, where increasing model number signifies increasing degrees of freedom in the spline basis functions. The data were extracted from the gridbox located at (lat, lon) $=(31.5, -93.8)$}. The exceedence is calculated by binning seasonality in 10-day blocks and summing over the long term change.}
+\label{CV}
+\end{figure}
+
+
+\subsection{Uncertainty Estimation}
+\label{app:uq}
+With a reasonable model chosen through cross-validation, we present a way to quantify its uncertainty. Because we are using multiple simulations that are assumed independent, we resample entire simulations from the set of 50 simulations. Resampling 50 new simulations with replacement from the original set of simulations yields a new dataset. From the new data set we obtain another temperature estimate with the same model basis functions but different coefficients, $\beta^{\ast}$. After repeating this resampling and re-estimating procedure 100 times we generate pointwise confidence intervals for temperature quantiles. For example, in Figure \ref{dq_vs_day} we show the $90\%$ confidence interval by selecting the pointwise $5^{th}$ and $95^{th}$ percentiles of temperature variability estimates. Because the confidence intervals are quite tight we deem the 100 new estimates (or bootstraps) sufficient to indicate that the results we describe in section \ref{sec:results} are not due to random variation. Larger number of bootstrap replicates might give slightly more accurate intervals but would not change our conclusions. One might also consider fewer simulations as a compromise between computation time and quality of the estimates. Assuming normally distributed confidence intervals, we would expect the standard error to scale as $1/\sqrt{n}$. Thus, if one is willing to widen the confidence intervals by a factor of 2 (approximately) only 10 simulations would suffice. However, one could compensate for this greater variability by using fewer basis functions at a cost, of course, of obtaining less resolved estimates of seasonal patterns and long-term trends in the quantiles.
+
+
+\bibliographystyle{ametsoc2014}
+\bibliography{paper}
+
+\end{document}
