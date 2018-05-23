@@ -247,7 +247,14 @@ are taken from Jan 1-15 and summer July 5-19;  ``initial'' distributions include
 
 % \EPSFIG[scale=0.45]{deviance.pdf}{Temperature standard deviation and associated change between 1850 and 2100. For winter, we use Jan 1-15, and for summer we use July 5-15. Plots titled 1850 include data from 1850-1865 while plots titles 2100 include data from 2085-2100.}{deviance}
 
-% \EPSFIG[scale=0.45]{skewness.pdf}{Change in temperature skewness between the first and last 10 years of the model simulations. For winter, we use the first 10 days of the year and for summer we use July 5-15 to calculate the sample skewness. Gray crosses represent points where the skewness change is not significant at the $\alpha=0.95$ level, obtained by resampling the set of 50 simulations (with replacement) and recalculating the sample skewness. After 100 repetitions of the resampling, we calculate the $95^{th}$-level confidence interval to determine if the skewness change is significantly different from zero. Each color bar represents the maps above and below it.}{skewness}
+With a smooth estimate of quantiles of average temperature, we show that the onset of spring, as measured by the first day of the year where average temperature reaches $-2.2^{\circ}$C \citep{pearse2017statistical}, occurs earlier in the year as the climate warms in the Detroit area (see Figure \ref{fig:FirstDayAbove2_2}). The lower quantiles seem to be progessing faster than the median quantiles, with the $25^{th}$ quantile hitting the $-2.2^{\circ}$C mark at a rate of approximately 15 days earlier per decade at present times. Note also that the $50^{th}$ quantile never goes below the threshold after year 2080. It is unclear how to produce the equivalent results using existing methods of segmenting average temperature into seasons. For instance, if we were to look at quantiles of average temperature during winter the edges of the season would pull the overall quantile estimates up and prematurely estimate the onset of spring.   
+
+\begin{figure}[ht]
+\centerline{\includegraphics[width=\smallfigwidth]{FirstDayAbove2_2.pdf}}
+\caption{\small{First day above $-2.2^\circ$C for each year from 1850-2100 as measured by fitting quantiles average temperature of the CESM ensemble data set. Three quantiles are shown to capture the spread of the distribution, $.5$ (green), $.25$ (red) and $.05$ (black).}}
+\label{fig:FirstDayAbove2_2}
+\end{figure}
+
 
 %To what extent the distributional characteristics are changing, and whether these changes are significant. 
 Our methodology for quantile estimation provides additional information that helps to
